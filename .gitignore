@@ -1,0 +1,25 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local secrets — should never exist in this repo (verify-only SDK), but
+# belt-and-suspenders against an accidental drop.
+.env
+.env.*
+keys/
+*.pem

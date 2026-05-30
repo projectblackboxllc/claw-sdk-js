@@ -1,0 +1,62 @@
+{
+  "name": "@clawid/sdk",
+  "version": "0.1.0",
+  "description": "ClawID — Agent KYC. Verify autonomous AI agent credentials in three lines.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "keywords": [
+    "agent",
+    "kyc",
+    "identity",
+    "ai",
+    "verification",
+    "passkey",
+    "trust",
+    "claw",
+    "clawid"
+  ],
+  "homepage": "https://holdtheleash.id",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/projectblackboxllc/claw-sdk-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/projectblackboxllc/claw-sdk-js/issues"
+  },
+  "author": "Project Black Box LLC <hello@holdtheleash.id>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.0",
+    "undici": "^7.1.0",
+    "vitest": "^2.1.8"
+  }
+}
