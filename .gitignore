@@ -21,5 +21,8 @@ coverage/
 # belt-and-suspenders against an accidental drop.
 .env
 .env.*
+env.sh
 keys/
 *.pem
+*.key
+*.db
