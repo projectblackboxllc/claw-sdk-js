@@ -1,6 +1,6 @@
 {
-  "name": "@clawid/sdk",
-  "version": "0.1.0",
+  "name": "clawid-sdk",
+  "version": "0.3.0",
   "description": "ClawID \u2014 Agent KYC. Verify autonomous AI agent credentials in three lines.",
   "type": "module",
   "main": "./dist/index.cjs",

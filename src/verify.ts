@@ -32,7 +32,7 @@ export function setDefaultClient(claw: Claw | null): void {
 
 /** Verify a Claw against the default hub.
  *
- *     import { verify } from '@clawid/sdk';
+ *     import { verify } from 'clawid-sdk';
  *     const result = await verify(token);
  *     if (result.valid) console.log(result.agentId);
  *

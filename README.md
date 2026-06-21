@@ -2,12 +2,12 @@
   <img src="https://holdtheleash.id/crab-claw-mark.png" width="120" alt="ClawID" />
 </p>
 
-<h1 align="center">@clawid/sdk</h1>
+<h1 align="center">clawid-sdk</h1>
 
 <p align="center"><strong>Agent KYC. Verify autonomous AI agent credentials in three lines.</strong></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@clawid/sdk"><img src="https://img.shields.io/npm/v/@clawid/sdk.svg" alt="npm" /></a>
+  <a href="https://www.npmjs.com/package/clawid-sdk"><img src="https://img.shields.io/npm/v/clawid-sdk.svg" alt="npm" /></a>
   <a href="https://github.com/projectblackboxllc/claw-sdk-js/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License" /></a>
   <img src="https://img.shields.io/badge/node-%E2%89%A518-blue.svg" alt="Node 18+" />
   <img src="https://img.shields.io/badge/types-included-blue.svg" alt="TypeScript types included" />
@@ -16,7 +16,7 @@
 ---
 
 ```ts
-import { verify } from '@clawid/sdk';
+import { verify } from 'clawid-sdk';
 
 const result = await verify(token);
 if (result.valid) {
@@ -45,11 +45,11 @@ One round-trip, four answers. Free forever for verifiers.
 ## Install
 
 ```bash
-npm install @clawid/sdk
+npm install clawid-sdk
 # or
-pnpm add @clawid/sdk
+pnpm add clawid-sdk
 # or
-yarn add @clawid/sdk
+yarn add clawid-sdk
 ```
 
 Node 18+ (native `fetch`). One runtime dependency: [`jose`](https://github.com/panva/jose).
@@ -60,7 +60,7 @@ Ships dual ESM + CJS with TypeScript types included.
 ### The common case
 
 ```ts
-import { verify } from '@clawid/sdk';
+import { verify } from 'clawid-sdk';
 
 const result = await verify(token);
 
@@ -76,7 +76,7 @@ console.log(`Leash:`, result.leash);
 ### When you want to configure things
 
 ```ts
-import { Claw } from '@clawid/sdk';
+import { Claw } from 'clawid-sdk';
 
 const claw = new Claw({
   hubUrl: 'https://api.holdtheleash.id',  // defaults to this
@@ -103,7 +103,7 @@ The SDK is framework-agnostic by design. An **Express** middleware looks like:
 
 ```ts
 import express from 'express';
-import { verify, type VerifyResult } from '@clawid/sdk';
+import { verify, type VerifyResult } from 'clawid-sdk';
 
 declare global {
   namespace Express {
@@ -138,7 +138,7 @@ For **Hono**:
 
 ```ts
 import { Hono } from 'hono';
-import { verify } from '@clawid/sdk';
+import { verify } from 'clawid-sdk';
 
 const app = new Hono();
 
@@ -236,7 +236,7 @@ malformed). Verification failures — bad signature, expired, revoked — never 
 return a `VerifyResult` with `valid=false` and a `status` that describes what happened.
 
 ```ts
-import { verify, ClawError } from '@clawid/sdk';
+import { verify, ClawError } from 'clawid-sdk';
 
 try {
   const result = await verify(token);
@@ -276,12 +276,12 @@ import type {
   VerifyMode,
   Leash,
   ClawOptions,
-} from '@clawid/sdk';
+} from 'clawid-sdk';
 ```
 
 ## Versioning
 
-`@clawid/sdk` follows [SemVer](https://semver.org/). The `VerifyResult` shape is stable
+`clawid-sdk` follows [SemVer](https://semver.org/). The `VerifyResult` shape is stable
 within a major; new optional fields are minor; field removals or behavior changes are
 major. `payload` always carries the full decoded JWS for forward-compatibility with new
 claims.

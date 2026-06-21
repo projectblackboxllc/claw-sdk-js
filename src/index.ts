@@ -5,7 +5,7 @@
  * autonomous AI agents carry to prove who they are, what their leash
  * permits, and whether the owner has revoked them).
  *
- *     import { verify } from '@clawid/sdk';
+ *     import { verify } from 'clawid-sdk';
  *     const result = await verify(token);
  *     if (result.valid) console.log(result.agentId, 'owned by', result.tenantId);
  *
