@@ -1,7 +1,7 @@
 {
   "name": "@clawid/sdk",
   "version": "0.1.0",
-  "description": "ClawID — Agent KYC. Verify autonomous AI agent credentials in three lines.",
+  "description": "ClawID \u2014 Agent KYC. Verify autonomous AI agent credentials in three lines.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -54,9 +54,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "esbuild": "^0.28.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.0",
     "undici": "^7.1.0",
     "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   }
 }
