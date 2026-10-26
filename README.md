@@ -154,6 +154,35 @@ app.use('*', async (c, next) => {
 });
 ```
 
+## Push notices
+
+The hub can POST to your server when something changes — a Claw used on
+your service was revoked, or (for owners) an agent is waiting for approval.
+Register an endpoint in the dashboard (Settings → Push notices) or with
+`POST /v1/webhooks`. Each notice is a signed
+[Security Event Token](https://www.rfc-editor.org/rfc/rfc8417) (`Content-Type:
+application/secevent+jwt`), checked against the same public key as every Claw:
+
+```ts
+import { verifyEvent } from 'clawid-sdk';
+
+const result = await verifyEvent(rawBody, { audience: 'tnt_your_tenant_id' });
+if (result.valid && result.eventType === 'claw.revoked') {
+  forget(result.data!.claw_jti);   // stop honoring this Claw now
+}
+```
+
+| `eventType` | Who gets it | `data` |
+|---|---|---|
+| `claw.revoked` | verified vendors the Claw was used on | `claw_jti`, `agent_id`, `tenant_id`, `revoked_at`, `cause` (`owner` / `auto_revoke`) |
+| `hold.created` | the owner | `hold_id`, `agent_label`, `surface`, `action`, `amount`, `expires_at`, `approve_url` |
+| `hold.resolved` | the owner | `hold_id`, `status` (`approved` / `rejected`), `release_expires_at` |
+| `ping` | whoever pressed "Send test" | `endpoint_id`, `sent_at` |
+
+Failed deliveries are retried for about a day and a half, so the same notice
+can arrive twice: dedupe on `result.eventId`. Push is a speed-up, not the
+source of truth — `verify(token)` in online mode still asks the hub live.
+
 ## What the result tells you
 
 `VerifyResult` is a fully-typed interface. The boolean `result.valid` is what you check.

@@ -53,6 +53,8 @@ export interface Leash {
   active_end_hour?: number;
   escalate_over?: number | null;
   auto_revoke_off_leash?: boolean;
+  /** Actions that always need the owner's approval, whatever the amount. */
+  hold_actions?: string[];
   [key: string]: unknown; // forward-compat for new leash params
 }
 
@@ -91,6 +93,35 @@ export interface ClawOptions {
   timeoutMs?: number;
   /** Optional custom fetch implementation (testing, polyfills, etc.). */
   fetch?: typeof fetch;
+}
+
+export const EVENT_URI_BASE = 'https://holdtheleash.id/events/';
+const SECURITY_EVENT_TYP = 'secevent+jwt';
+/** Tolerated clock skew for a notice's `iat` landing slightly in the future. */
+const EVENT_CLOCK_SKEW_S = 300;
+
+/** Push notice types the hub sends. */
+export type EventType = 'claw.revoked' | 'hold.created' | 'hold.resolved' | 'ping';
+
+/** Result of `verifyEvent()` — one push notice from the hub.
+ *
+ * The hub retries failed deliveries, so the same notice can arrive more
+ * than once: dedupe on `eventId`. */
+export interface EventResult {
+  valid: boolean;
+  reason?: string;
+  eventType?: EventType | string;
+  eventId?: string;
+  data?: Record<string, unknown>;
+  issuedAt?: number;
+  audience?: string;
+}
+
+export interface VerifyEventOptions {
+  /** Refuse notices not addressed to this tenant_id. */
+  audience?: string;
+  /** Refuse notices signed longer ago than this. */
+  maxAgeSeconds?: number;
 }
 
 /** Raised only on infrastructure failures (the hub is unreachable, JWKS
@@ -168,6 +199,82 @@ export class Claw {
     this.#jwksInFlight = null;
   }
 
+  /** Verify a push notice the hub POSTed to your endpoint.
+   *
+   * `body` is the raw request body (a compact JWS, Content-Type
+   * application/secevent+jwt). Never throws on a bad notice — check
+   * `.valid`. Throws `ClawError` only if the hub's JWKS can't be fetched.
+   *
+   *     const r = await claw.verifyEvent(rawBody, { audience: 'tnt_…' });
+   *     if (r.valid && r.eventType === 'claw.revoked') forget(r.data!.claw_jti);
+   */
+  async verifyEvent(
+    body: string | Uint8Array,
+    opts: VerifyEventOptions = {},
+  ): Promise<EventResult> {
+    const token = (typeof body === 'string' ? body : new TextDecoder().decode(body)).trim();
+    let header: { kid?: string; typ?: string };
+    try {
+      const headerB64 = token.split('.')[0];
+      if (!headerB64) throw new Error('not a JWS');
+      header = JSON.parse(Buffer.from(headerB64, 'base64url').toString('utf-8'));
+    } catch {
+      return { valid: false, reason: 'malformed notice' };
+    }
+    if (header.typ !== SECURITY_EVENT_TYP) {
+      return { valid: false, reason: 'not a ClawID notice (wrong typ)' };
+    }
+    if (!header.kid) return { valid: false, reason: "notice missing 'kid' header" };
+
+    const jwk = await this.#jwkForKid(header.kid);
+    if (!jwk) {
+      return { valid: false, reason: `no key with kid=${JSON.stringify(header.kid)} in hub JWKS` };
+    }
+    let claims: Record<string, unknown>;
+    try {
+      const publicKey = await importJWK(jwk, 'EdDSA');
+      const result = await jwtVerify(token, publicKey, {
+        issuer: 'claw-hub',
+        algorithms: ['EdDSA'],
+        typ: SECURITY_EVENT_TYP,
+        audience: opts.audience,
+        requiredClaims: ['iat', 'jti'],
+      });
+      claims = result.payload as Record<string, unknown>;
+    } catch (e) {
+      if (e instanceof joseErrors.JWTClaimValidationFailed && e.claim === 'aud') {
+        return { valid: false, reason: 'notice is addressed to someone else' };
+      }
+      return { valid: false, reason: `invalid notice: ${(e as Error).message}` };
+    }
+
+    const events = claims['events'];
+    if (!events || typeof events !== 'object' || Array.isArray(events)
+        || Object.keys(events).length !== 1) {
+      return { valid: false, reason: 'notice must carry exactly one event' };
+    }
+    const [uri, data] = Object.entries(events as Record<string, unknown>)[0]!;
+    if (!uri.startsWith(EVENT_URI_BASE) || !data || typeof data !== 'object' || Array.isArray(data)) {
+      return { valid: false, reason: 'not a ClawID event' };
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const iat = Number(claims['iat']);
+    if (iat > now + EVENT_CLOCK_SKEW_S) {
+      return { valid: false, reason: 'notice is dated in the future' };
+    }
+    if (opts.maxAgeSeconds !== undefined && now - iat > opts.maxAgeSeconds) {
+      return { valid: false, reason: 'notice is too old' };
+    }
+    return {
+      valid: true,
+      eventType: uri.slice(EVENT_URI_BASE.length),
+      eventId: claims['jti'] as string,
+      data: data as Record<string, unknown>,
+      issuedAt: iat,
+      audience: claims['aud'] as string | undefined,
+    };
+  }
+
   /** Test / introspection accessor — returns the cached JWKS state so
    * tests can assert cache hit/miss by object identity. Not part of the
    * stable public API; subject to change. */
@@ -193,6 +300,17 @@ export class Claw {
     } finally {
       this.#jwksInFlight = null;
     }
+  }
+
+  /** Hub key for `kid`, refetching once if it isn't cached (handles a
+   * key rotation that landed inside the cache TTL). */
+  async #jwkForKid(kid: string): Promise<JWK | undefined> {
+    let jwk = (await this.#getJwks()).find((k) => k.kid === kid);
+    if (!jwk) {
+      this.jwksCacheClear();
+      jwk = (await this.#getJwks()).find((k) => k.kid === kid);
+    }
+    return jwk;
   }
 
   async #fetchJwks(): Promise<JWK[]> {

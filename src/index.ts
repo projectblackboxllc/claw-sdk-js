@@ -11,18 +11,24 @@
  *
  * Three lines. Free forever for verifiers. No key, no contract.
  *
+ * Push notices (revocations, approval requests) arrive as signed Security
+ * Event Tokens; check one with `verifyEvent(body)`.
+ *
  * See https://holdtheleash.id for the product,
  * https://github.com/projectblackboxllc/claw-sdk-js for the source,
  * and the README for the full API surface.
  */
-export { Claw, ClawError } from './client.js';
+export { Claw, ClawError, EVENT_URI_BASE } from './client.js';
 export type {
   VerifyResult,
   VerifyStatus,
   VerifyMode,
   Leash,
   ClawOptions,
+  EventResult,
+  EventType,
+  VerifyEventOptions,
 } from './client.js';
-export { verify, verifyAsync } from './verify.js';
+export { verify, verifyAsync, verifyEvent } from './verify.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.4.0';

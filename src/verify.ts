@@ -7,7 +7,13 @@
  * a custom fetch implementation.
  */
 
-import { Claw, type VerifyMode, type VerifyResult } from './client.js';
+import {
+  Claw,
+  type EventResult,
+  type VerifyEventOptions,
+  type VerifyMode,
+  type VerifyResult,
+} from './client.js';
 
 let defaultClient: Claw | null = null;
 
@@ -48,3 +54,17 @@ export function verify(
  * (where `verify_async` is the explicit async variant). In JS verify is
  * already async — both names work. */
 export const verifyAsync = verify;
+
+/** Verify a push notice against the default hub.
+ *
+ *     import { verifyEvent } from 'clawid-sdk';
+ *     const r = await verifyEvent(rawBody, { audience: 'tnt_…' });
+ *     if (r.valid && r.eventType === 'claw.revoked') forget(r.data!.claw_jti);
+ *
+ * Dedupe on `r.eventId` — the hub retries, so a notice can arrive twice. */
+export function verifyEvent(
+  body: string | Uint8Array,
+  opts: VerifyEventOptions = {},
+): Promise<EventResult> {
+  return getDefaultClient().verifyEvent(body, opts);
+}
